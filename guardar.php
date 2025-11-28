@@ -1,45 +1,39 @@
 <?php
+// guardar.php (Versión con PDO)
 
-// Obtener URL de PostgreSQL desde render (cuando subas)
-$url = getenv("postgresql://pruebajmeter_user:yHBGhnk2F0WWevKdJOnbkNlELsyNDJl6@dpg-d4ka69npm1nc73ahrdjg-a/pruebajmeter");
+// 1. Incluir el archivo de conexión
+require_once 'db.php';
 
-if (!$url) {
-    die("❌ DATABASE_URL no encontrada. Aún no estás en Render.");
-}
+try {
+    // 2. Obtener la conexión PDO
+    $pdo = getDbConnection();
 
-// Convertir URL en partes
-$db = parse_url($url);
+    // 3. Obtener datos POST
+    // PDO ya manejará la seguridad con sentencias preparadas,
+    // por lo que no necesitamos pg_escape_string.
+    $nombre  = $_POST["nombre"];
+    $ip      = $_POST["ip"];
+    $tipo    = $_POST["tipo"];
+    $estatus = $_POST["estatus"];
 
-// Conectar
-$conn = pg_connect(
-  "host={$db['host']} 
-  port={$db['port']} 
-  dbname=" . ltrim($db['path'], '/') . " 
-  user={$db['user']} 
-  password={$db['pass']}"
-);
+    // 4. Escribir la consulta SQL usando marcadores de posición (?)
+    $sql = "INSERT INTO dispositivos (nombre, ip, tipo, estatus, created_at, updated_at)
+            VALUES (?, ?, ?, ?, NOW(), NOW())";
 
-if (!$conn) {
-    die("❌ Error de conexión a PostgreSQL");
-}
+    // 5. Preparar la consulta
+    $stmt = $pdo->prepare($sql);
 
-// Obtener datos POST
-$nombre  = pg_escape_string($conn, $_POST["nombre"]);
-$ip      = pg_escape_string($conn, $_POST["ip"]);
-$tipo    = pg_escape_string($conn, $_POST["tipo"]);
-$estatus = pg_escape_string($conn, $_POST["estatus"]);
+    // 6. Ejecutar la consulta, pasando las variables en un array
+    // PDO se encarga de escapar y sanitizar automáticamente.
+    $stmt->execute([$nombre, $ip, $tipo, $estatus]);
 
-// Insertar
-$sql = "INSERT INTO dispositivos (nombre, ip, tipo, estatus, created_at, updated_at)
-        VALUES ('$nombre', '$ip', '$tipo', '$estatus', NOW(), NOW())";
-
-$result = pg_query($conn, $sql);
-
-if ($result) {
     echo "✅ Dispositivo guardado correctamente";
-} else {
-    echo "❌ Error al guardar dispositivo";
+
+} catch (PDOException $e) {
+    // Capturar cualquier error en la consulta
+    echo "❌ Error al guardar dispositivo: " . $e->getMessage();
 }
 
-pg_close($conn);
+// 7. Cerrar la conexión (opcional)
+closeDbConnection();
 ?>
