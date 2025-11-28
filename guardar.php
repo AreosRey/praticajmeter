@@ -1,7 +1,7 @@
 <?php
 
 // Obtener URL de PostgreSQL desde render (cuando subas)
-$url = getenv("postgresql://pruebajmeter_user:yHBGhnk2F0WWevKdJOnbkNlELsyNDJl6@dpg-d4ka69npm1nc73ahrdjg-a.oregon-postgres.render.com/pruebajmeter");
+$url = getenv("dpg-d4ka69npm1nc73ahrdjg-a.oregon-postgres.render.com");
 
 if (!$url) {
     die("❌ DATABASE_URL no encontrada. Aún no estás en Render.");
